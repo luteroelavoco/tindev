@@ -1,33 +1,50 @@
-import React, {useState, useEffect} from 'react';
-import { KeyboardAvoidingView,Platform, StyleSheet, Image, TextInput, TouchableOpacity, Text } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { KeyboardAvoidingView, Platform, StyleSheet, Image, TextInput, TouchableOpacity, Text } from 'react-native';
 import AsyncStorage from "@react-native-community/async-storage";
+import load from "../assets/load.gif";
 
 
 import logo from "../assets/logo.png";
 import api from "../services/api";
-export default function Login({navigation}) {
+export default function Login({ navigation }) {
 
     const [user, setUser] = useState();
+    const [loading, setLoading] = useState(false);
+    const [error, setError] = useState(null);
 
 
-    useEffect(()=>{
+    useEffect(() => {
         AsyncStorage.getItem('user').then(user => {
-            if(user)
-                navigation.navigate('Main', {user})
+            if (user)
+                navigation.navigate('Main', { user })
         })
 
-    },[])
+    }, [])
 
-    async function handleLogin(){
-        const response = await api.post('/devs',{
-            username: user 
-        });
-        
-        const { _id } = response.data;
+    async function handleLogin() {
 
-        await AsyncStorage.setItem('user', _id);
-        
-        navigation.navigate('Main', {user: _id });
+        setLoading(true);
+        await api.post('/devs', {
+            username: user
+        }).then(response => {
+            const { _id } = response.data;
+
+            (async function logar(){await AsyncStorage.setItem('user', _id)})();
+
+            navigation.navigate('Main', { user: _id });
+        }).catch(error => {
+            if (error.response.status === 404)
+                setError('Usuario não existe');
+            else if (error.response.status === 406)
+                setError('Este usuário do github contem informações invalidas');
+            else
+                setError('Aconteceu um erro no servidor, tenta mais tarde');
+
+        }).finally(resp => () => {
+            setLoading(false)
+        })
+
+
     }
 
 
@@ -48,6 +65,7 @@ export default function Login({navigation}) {
                 value={user}
                 onChangeText={setUser}
             />
+            { loading && <Image style={styles.loading} source={require('../assets/load.gif')} />}
             <TouchableOpacity style={styles.button} onPress={handleLogin}>
                 <Text style={styles.buttonText}>Enviar</Text>
             </TouchableOpacity>
@@ -86,5 +104,9 @@ const styles = StyleSheet.create({
         color: '#fff',
         fontWeight: 'bold',
         fontSize: 16,
+    },
+    loading:{
+        height: 60,
+        resizeMode: 'contain'
     }
 })
