@@ -40,11 +40,9 @@ export default function Main({ navigation }) {
         const socket = io(url, {
             query: { user }
         });
-
         socket.on('match', dev => {
-            setMachDev(dev)
+            (function(){setMachDev(dev)})();
         })
-
     }, [user])
 
     async function handleLike() {
