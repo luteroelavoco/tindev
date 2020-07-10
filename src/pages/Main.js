@@ -6,7 +6,7 @@ import io from "socket.io-client";
 import logo from "../assets/logo.png";
 import like from "../assets/like.png";
 import dislike from "../assets/dislike.png";
-import itsmatch from "../assets/match.png";
+import itsamatch from "../assets/match.png";
 import api, { url } from "../services/api";
 
 
@@ -15,7 +15,7 @@ export default function Main({ navigation }) {
     const user = navigation.getParam('user');
 
     const [users, setUsers] = useState([]);
-    const [matchDev, setMachDev] = useState(null);
+    const [matchDev, setMachDev] = useState();
 
     async function handleLoggout() {
         await AsyncStorage.clear();
@@ -43,6 +43,16 @@ export default function Main({ navigation }) {
         socket.on('match', dev => {
             (function(){setMachDev(dev)})();
         })
+
+        socket.on('newdev', newdev => {   
+
+            function NewUser () {  
+                setUsers(users => [...users, newdev]);
+            }
+            NewUser();
+
+        })
+
     }, [user])
 
     async function handleLike() {
@@ -102,7 +112,7 @@ export default function Main({ navigation }) {
 
             {matchDev && (
                 <View style={styles.matchContainer}>
-                    <Image style={styles.itsmatch} source={itsmatch} />
+                    <Image style={styles.itsmatch} source={itsamatch} />
                     <Image style={styles.matchAvatar} source={{ uri: matchDev.avatar }} />
                     <Text style={styles.matchName}> {matchDev.name}</Text>
                     <Text style={styles.matchBio}> {matchDev.bio}</Text>

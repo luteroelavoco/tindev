@@ -10,7 +10,7 @@ export default function Login({ navigation }) {
 
     const [user, setUser] = useState();
     const [loading, setLoading] = useState(false);
-    const [error, setError] = useState(null);
+    const [error, setError] = useState();
 
 
     useEffect(() => {
@@ -18,7 +18,6 @@ export default function Login({ navigation }) {
             if (user)
                 navigation.navigate('Main', { user })
         })
-
     }, [])
 
     async function handleLogin() {
@@ -29,19 +28,25 @@ export default function Login({ navigation }) {
         }).then(response => {
             const { _id } = response.data;
 
-            (async function logar(){await AsyncStorage.setItem('user', _id)})();
+            (async function logar() { await AsyncStorage.setItem('user', _id) })();
 
             navigation.navigate('Main', { user: _id });
-        }).catch(error => {
-            if (error.response.status === 404)
-                setError('Usuario não existe');
-            else if (error.response.status === 406)
-                setError('Este usuário do github contem informações invalidas');
-            else
-                setError('Aconteceu um erro no servidor, tenta mais tarde');
 
-        }).finally(resp => () => {
-            setLoading(false)
+        }).catch(error => {
+            if (error) {
+                if (error.response.status === 404)
+                    setError('Usuario não existe');
+                else if (error.response.status === 406)
+                    setError('Este usuário do github contem informações invalidas');
+                else
+                    setError('Aconteceu um erro no servidor, tenta mais tarde');
+                return;
+            }
+            setError('Aconteceu um erro no servidor, tenta mais tarde');
+        }).finally(resp => {
+            (() => {
+                setLoading(false)
+            })();
         })
 
 
@@ -65,7 +70,11 @@ export default function Login({ navigation }) {
                 value={user}
                 onChangeText={setUser}
             />
-            { loading && <Image style={styles.loading} source={require('../assets/load.gif')} />}
+
+            {loading && <Image style={styles.loading} source={require('../assets/load.gif')} />}
+
+            {error && <Text style={styles.error}>{error}</Text>}
+
             <TouchableOpacity style={styles.button} onPress={handleLogin}>
                 <Text style={styles.buttonText}>Enviar</Text>
             </TouchableOpacity>
@@ -91,6 +100,16 @@ const styles = StyleSheet.create({
         marginTop: 20,
         paddingHorizontal: 15,
     },
+    loading: {
+        height: 60,
+        resizeMode: 'contain'
+    },
+    error: {
+        marginVertical: 8,
+        fontWeight: 'bold',
+        color: 'red',
+        textAlign: 'center'
+    },
     button: {
         height: 46,
         alignSelf: 'stretch',
@@ -105,8 +124,5 @@ const styles = StyleSheet.create({
         fontWeight: 'bold',
         fontSize: 16,
     },
-    loading:{
-        height: 60,
-        resizeMode: 'contain'
-    }
+
 })
